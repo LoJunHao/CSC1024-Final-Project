@@ -70,6 +70,65 @@ stateDiagram-v2
 
 ---
 
+## 🗺️ Application Workflow Flowchart
+
+Below is a flowchart highlighting the main program loop, input validations, menu selections, database updates, and lifecycle validations.
+
+```mermaid
+flowchart TD
+    Start([Start Application]) --> SeedPlatforms[Seed/Load platforms.txt]
+    SeedPlatforms --> MainMenu{Main Menu Selection}
+
+    MainMenu -->|1. Add Post Idea| AddPost[Add Post Idea]
+    AddPost --> CheckID{Is Post ID unique?}
+    CheckID -->|No| AddPost
+    CheckID -->|Yes| ValidPlatform{Is platform in platforms.txt?}
+    ValidPlatform -->|No| AddPost
+    ValidPlatform -->|Yes| SanitizedCaption{No pipe characters?}
+    SanitizedCaption -->|No| AddPost
+    SanitizedCaption -->|Yes| ValidDate{Is date YYYY-MM-DD?}
+    ValidDate -->|No| AddPost
+    ValidDate -->|Yes| SaveDraft[Save to posts.txt as Draft]
+    SaveDraft --> MainMenu
+
+    MainMenu -->|2. Update Post Status| ChoosePostUpdate[Select Post ID]
+    ChoosePostUpdate --> CurrentStatus{Current Status?}
+    CurrentStatus -->|Draft| SetScheduled[Change to Scheduled]
+    CurrentStatus -->|Scheduled| SetPostedOrDraft{Posted or Draft?}
+    SetPostedOrDraft -->|Posted| SetPosted[Change to Posted]
+    SetPostedOrDraft -->|Draft| SetDraftBack[Change to Draft]
+    CurrentStatus -->|Posted| AlreadyPosted[Locked: No Updates Needed]
+    SetScheduled & SetPosted & SetDraftBack & AlreadyPosted --> SaveStatusUpdate[Save to posts.txt]
+    SaveStatusUpdate --> MainMenu
+
+    MainMenu -->|3. Record Metrics| RecordMetrics[Select Post ID]
+    RecordMetrics --> IsPosted{Is status Posted?}
+    IsPosted -->|No| MetricsDenied[Error: Post must be Posted]
+    IsPosted -->|Yes| GetMetrics[Input Likes, Comments, Shares, Views]
+    GetMetrics --> SaveMetrics[Save to engagement.txt]
+    MetricsDenied & SaveMetrics --> MainMenu
+
+    MainMenu -->|4. Calendar| DisplayCalendar[Read & sort posts.txt by Date]
+    DisplayCalendar --> ShowCalendar[Print Sorted Table]
+    ShowCalendar --> MainMenu
+
+    MainMenu -->|5. Delete Post| ConfirmDelete[Confirm Deletion of Post ID]
+    ConfirmDelete -->|Yes| RemovePost[Remove from posts.txt]
+    RemovePost --> CascadeDelete[Delete corresponding engagement from engagement.txt]
+    CascadeDelete --> MainMenu
+    ConfirmDelete -->|No| MainMenu
+
+    MainMenu -->|6 & 7. Reports| ComputeStats[Compute stats: posts count, best post, most active platform]
+    ComputeStats --> PrintOrExport{Option 6 or 7?}
+    PrintOrExport -->|6. Generate| PrintReport[Print to Console]
+    PrintOrExport -->|7. Export| ExportReport[Write to report.txt]
+    PrintReport & ExportReport --> MainMenu
+
+    MainMenu -->|8. Exit| End([Exit Application])
+```
+
+---
+
 ## 🚀 Core Functionalities & Workflows
 
 ### ➕ 1. Add Post Idea
