@@ -1,0 +1,3 @@
+POST001,P1,My first workspace aesthetic tour!,2026-08-10,Draft
+POST002,P2,Day in the life of a CS student,2026-08-01,Posted
+POST003,P3,Why Python is great for beginners,2026-08-05,Scheduled
