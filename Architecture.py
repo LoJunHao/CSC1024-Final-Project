@@ -1,6 +1,6 @@
 """
 Academic Session: May 2026
-Course Code: CSC1024 / PRG3024 / FEL1184 Programming Principles
+Course Code: CSC1024 Programming Principles
 Project Title: Python-Powered Social Media Content Planner
 
 Description:
