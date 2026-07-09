@@ -1,0 +1,3 @@
+P1,Instagram,1500
+P2,TikTok,45000
+P3,X,520
