@@ -1,0 +1,4 @@
+POST001|Instagram|Check out our new project launch!|2026-08-01|Scheduled
+POST002|TikTok|A day in the life of a computer science student|2026-07-10|Posted
+POST003|X|Excited to share that we are starting our final programming project today!|2026-07-09|Posted
+POST004|Instagram|Sneak peek of the new UI design!|2026-08-05|Draft
