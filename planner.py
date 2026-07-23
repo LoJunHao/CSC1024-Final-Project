@@ -1,5 +1,4 @@
-import os
-from datetime import datetime
+import datetime
 
 # Define filenames for the persistent data files
 POSTS_FILE = "posts.txt"
@@ -17,15 +16,18 @@ def load_platforms():
     Fields: Platform ID|Platform Name|Follower Count
     """
     platforms = []
-    if not os.path.exists(PLATFORMS_FILE):
-        # Create a default file if it does not exist
+    
+    # Try reading the file; create default if file does not exist
+    try:
+        f = open(PLATFORMS_FILE, 'r')
+    except:
         f = open(PLATFORMS_FILE, 'w')
         f.write("P1|Instagram|12500\n")
         f.write("P2|TikTok|45000\n")
         f.write("P3|X|8200\n")
         f.close()
-    
-    f = open(PLATFORMS_FILE, 'r')
+        f = open(PLATFORMS_FILE, 'r')
+
     for line in f:
         line = line.strip()
         if line == "":
@@ -48,10 +50,11 @@ def load_posts():
     Fields: Post ID|Platform Name|Content Caption|Scheduled Date|Status
     """
     posts = []
-    if not os.path.exists(POSTS_FILE):
+    try:
+        f = open(POSTS_FILE, 'r')
+    except:
         return posts
         
-    f = open(POSTS_FILE, 'r')
     for line in f:
         line = line.strip()
         if line == "":
@@ -87,10 +90,11 @@ def load_engagement():
     Fields: Post ID|Likes|Comments|Shares|Views
     """
     engagement = []
-    if not os.path.exists(ENGAGEMENT_FILE):
+    try:
+        f = open(ENGAGEMENT_FILE, 'r')
+    except:
         return engagement
         
-    f = open(ENGAGEMENT_FILE, 'r')
     for line in f:
         line = line.strip()
         if line == "":
@@ -126,18 +130,25 @@ def save_engagement(engagement_list):
 
 def get_valid_date(prompt):
     """
-    Prompts the user for a date in YYYY-MM-DD format and validates it.
+    Prompts the user for a date in YYYY-MM-DD format and validates it using basic syntax.
     Loops until a valid date is entered or the user types 'cancel'.
     """
     while True:
         date_input = input(prompt).strip()
         if date_input.lower() == 'cancel':
             return None
-        try:
-            datetime.strptime(date_input, "%Y-%m-%d")
-            return date_input
-        except ValueError:
-            print("[ERROR] Invalid date format! Please enter a valid date in YYYY-MM-DD format (or type 'cancel' to abort).")
+        
+        # Manual basic string validation for YYYY-MM-DD format
+        parts = date_input.split('-')
+        if len(parts) == 3 and len(parts[0]) == 4 and len(parts[1]) == 2 and len(parts[2]) == 2:
+            if parts[0].isdigit() and parts[1].isdigit() and parts[2].isdigit():
+                year = int(parts[0])
+                month = int(parts[1])
+                day = int(parts[2])
+                if 1900 <= year <= 2100 and 1 <= month <= 12 and 1 <= day <= 31:
+                    return date_input
+        
+        print("[ERROR] Invalid date format! Please enter a valid date in YYYY-MM-DD format (or type 'cancel' to abort).")
 
 
 def get_non_negative_int(prompt):
@@ -368,15 +379,10 @@ def record_engagement_metrics():
     save_engagement(engagement_list)
 
 
-def get_post_date(post):
-    """Helper function to get post date for sorting without using lambda."""
-    return post["date"]
-
-
 def display_content_calendar():
     """
     Option 4: Display content calendar.
-    Shows posts sorted by scheduled date, platform, caption preview, and status.
+    Shows posts sorted chronologically by scheduled date using a basic Selection Sort algorithm.
     """
     print("\n============================================================")
     print("                    CONTENT CALENDAR")
@@ -387,8 +393,17 @@ def display_content_calendar():
         print("No scheduled posts to show. Add some post ideas first!")
         return
 
-    # Sort posts by date using a named function instead of lambda
-    posts.sort(key=get_post_date)
+    # Basic Selection Sort by scheduled date string (YYYY-MM-DD)
+    n = len(posts)
+    for i in range(n):
+        min_index = i
+        for j in range(i + 1, n):
+            if posts[j]["date"] < posts[min_index]["date"]:
+                min_index = j
+        # Swap elements using a temporary variable
+        temp = posts[i]
+        posts[i] = posts[min_index]
+        posts[min_index] = temp
 
     print("Post ID    | Scheduled Date  | Platform   | Status     | Caption Preview")
     print("---------------------------------------------------------------------------")
@@ -400,11 +415,21 @@ def display_content_calendar():
         else:
             preview = caption
 
-        # Basic string formatting with spacing
-        line = post['post_id'] + " " * (10 - len(post['post_id'])) + " | " + \
-               post['date'] + " " * (15 - len(post['date'])) + " | " + \
-               post['platform'] + " " * (10 - len(post['platform'])) + " | " + \
-               post['status'] + " " * (10 - len(post['status'])) + " | " + preview
+        # Basic string padding using simple loop or string addition
+        line = post['post_id']
+        while len(line) < 10:
+            line = line + " "
+        line = line + " | " + post['date']
+        while len(line) < 28:
+            line = line + " "
+        line = line + " | " + post['platform']
+        while len(line) < 41:
+            line = line + " "
+        line = line + " | " + post['status']
+        while len(line) < 54:
+            line = line + " "
+        line = line + " | " + preview
+
         print(line)
     print("============================================================")
 
@@ -412,7 +437,7 @@ def display_content_calendar():
 def delete_post():
     """
     Option 5: Delete a post.
-    Implements a cascading delete on engagement.txt.
+    Implements a cascading delete on engagement.txt using basic loops.
     """
     print("\n========================================")
     print("           DELETE POST")
@@ -449,7 +474,7 @@ def delete_post():
         save_posts(posts)
         print("\n[SUCCESS] Post '" + deleted_post['post_id'] + "' has been deleted.")
 
-        # Cascading delete in engagement.txt without list comprehensions
+        # Cascading delete in engagement.txt using a standard for loop
         engagement_list = load_engagement()
         updated_engagement = []
         for eng in engagement_list:
@@ -465,7 +490,7 @@ def delete_post():
 
 def compile_performance_report_data():
     """
-    Helper function that computes statistics for the performance report.
+    Helper function that computes statistics for the performance report using basic syntax.
     """
     platforms = load_platforms()
     posts = load_posts()
@@ -526,7 +551,7 @@ def compile_performance_report_data():
             else:
                 platform_interaction[p_name] = total_eng
 
-    # Find the platform with max interaction value (without using dict.items())
+    # Find the platform with max interaction value using a standard loop
     most_interactive_platform = None
     max_platform_interaction = -1
     for p_name in platform_interaction:
@@ -583,8 +608,8 @@ def generate_performance_report():
 
 def export_report_to_file():
     """
-    Option 7: Export report to file (e.g. report.txt).
-    Saves the performance summary to a text file.
+    Option 7: Export report to file (report.txt).
+    Saves the performance summary to a text file using basic file writing.
     """
     print("\n========================================")
     print("          EXPORT REPORT TO FILE")
@@ -597,7 +622,10 @@ def export_report_to_file():
         f = open(export_filename, "w")
         f.write("=============================================\n")
         f.write("      SOCIAL MEDIA PERFORMANCE REPORT\n")
-        f.write("      Generated on: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
+        now_str = str(datetime.datetime.now())
+        if len(now_str) >= 19:
+            now_str = now_str[:19]
+        f.write("      Generated on: " + now_str + "\n")
         f.write("=============================================\n\n")
 
         f.write("--- Total Posts Per Platform ---\n")
@@ -650,7 +678,7 @@ def main():
         print(" 2. Update Post Status")
         print(" 3. Record Engagement Metrics")
         print(" 4. Display Content Calendar")
-        print(" 5. Delete a Post Idea (With Cascading Delete)")
+        print(" 5. Delete a Post Idea")
         print(" 6. Generate Performance Report")
         print(" 7. Export Performance Report to File")
         print(" 8. Exit")
