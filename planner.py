@@ -6,6 +6,7 @@ POSTS_FILE = "posts.txt"
 PLATFORMS_FILE = "platforms.txt"
 ENGAGEMENT_FILE = "engagement.txt"
 
+
 # ==========================================
 # FILE HANDLING & DATA LOADING FUNCTIONS
 # ==========================================
@@ -18,23 +19,26 @@ def load_platforms():
     platforms = []
     if not os.path.exists(PLATFORMS_FILE):
         # Create a default file if it does not exist
-        with open(PLATFORMS_FILE, 'w') as f:
-            f.write("P1|Instagram|12500\n")
-            f.write("P2|TikTok|45000\n")
-            f.write("P3|X|8200\n")
+        f = open(PLATFORMS_FILE, 'w')
+        f.write("P1|Instagram|12500\n")
+        f.write("P2|TikTok|45000\n")
+        f.write("P3|X|8200\n")
+        f.close()
     
-    with open(PLATFORMS_FILE, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split('|')
-            if len(parts) == 3:
-                platforms.append({
-                    "platform_id": parts[0],
-                    "name": parts[1],
-                    "followers": int(parts[2])
-                })
+    f = open(PLATFORMS_FILE, 'r')
+    for line in f:
+        line = line.strip()
+        if line == "":
+            continue
+        parts = line.split('|')
+        if len(parts) == 3:
+            platform_dict = {
+                "platform_id": parts[0],
+                "name": parts[1],
+                "followers": int(parts[2])
+            }
+            platforms.append(platform_dict)
+    f.close()
     return platforms
 
 
@@ -45,23 +49,24 @@ def load_posts():
     """
     posts = []
     if not os.path.exists(POSTS_FILE):
-        # Return empty list if file doesn't exist yet
         return posts
         
-    with open(POSTS_FILE, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split('|')
-            if len(parts) == 5:
-                posts.append({
-                    "post_id": parts[0],
-                    "platform": parts[1],
-                    "caption": parts[2],
-                    "date": parts[3],
-                    "status": parts[4]
-                })
+    f = open(POSTS_FILE, 'r')
+    for line in f:
+        line = line.strip()
+        if line == "":
+            continue
+        parts = line.split('|')
+        if len(parts) == 5:
+            post_dict = {
+                "post_id": parts[0],
+                "platform": parts[1],
+                "caption": parts[2],
+                "date": parts[3],
+                "status": parts[4]
+            }
+            posts.append(post_dict)
+    f.close()
     return posts
 
 
@@ -69,10 +74,11 @@ def save_posts(posts):
     """
     Writes the list of post dictionaries back to posts.txt.
     """
-    with open(POSTS_FILE, 'w') as f:
-        for post in posts:
-            line = f"{post['post_id']}|{post['platform']}|{post['caption']}|{post['date']}|{post['status']}\n"
-            f.write(line)
+    f = open(POSTS_FILE, 'w')
+    for post in posts:
+        line = post['post_id'] + "|" + post['platform'] + "|" + post['caption'] + "|" + post['date'] + "|" + post['status'] + "\n"
+        f.write(line)
+    f.close()
 
 
 def load_engagement():
@@ -82,23 +88,24 @@ def load_engagement():
     """
     engagement = []
     if not os.path.exists(ENGAGEMENT_FILE):
-        # Return empty list if file doesn't exist yet
         return engagement
         
-    with open(ENGAGEMENT_FILE, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split('|')
-            if len(parts) == 5:
-                engagement.append({
-                    "post_id": parts[0],
-                    "likes": int(parts[1]),
-                    "comments": int(parts[2]),
-                    "shares": int(parts[3]),
-                    "views": int(parts[4])
-                })
+    f = open(ENGAGEMENT_FILE, 'r')
+    for line in f:
+        line = line.strip()
+        if line == "":
+            continue
+        parts = line.split('|')
+        if len(parts) == 5:
+            eng_dict = {
+                "post_id": parts[0],
+                "likes": int(parts[1]),
+                "comments": int(parts[2]),
+                "shares": int(parts[3]),
+                "views": int(parts[4])
+            }
+            engagement.append(eng_dict)
+    f.close()
     return engagement
 
 
@@ -106,10 +113,11 @@ def save_engagement(engagement_list):
     """
     Writes the list of engagement dictionaries back to engagement.txt.
     """
-    with open(ENGAGEMENT_FILE, 'w') as f:
-        for eng in engagement_list:
-            line = f"{eng['post_id']}|{eng['likes']}|{eng['comments']}|{eng['shares']}|{eng['views']}\n"
-            f.write(line)
+    f = open(ENGAGEMENT_FILE, 'w')
+    for eng in engagement_list:
+        line = eng['post_id'] + "|" + str(eng['likes']) + "|" + str(eng['comments']) + "|" + str(eng['shares']) + "|" + str(eng['views']) + "\n"
+        f.write(line)
+    f.close()
 
 
 # ==========================================
@@ -126,7 +134,6 @@ def get_valid_date(prompt):
         if date_input.lower() == 'cancel':
             return None
         try:
-            # Check date format and validity
             datetime.strptime(date_input, "%Y-%m-%d")
             return date_input
         except ValueError:
@@ -155,21 +162,20 @@ def add_new_post_idea():
     Option 1: Add a new post idea.
     Guides the user to enter fields and validates data.
     """
-    print("\n" + "=" * 40)
+    print("\n========================================")
     print("      ADD NEW POST IDEA")
-    print("=" * 40)
+    print("========================================")
 
-    # 1. Load platforms and posts
     platforms = load_platforms()
     posts = load_posts()
 
-    # 2. Get unique Post ID
+    # Get unique Post ID
     while True:
         post_id = input("Enter Post ID (e.g., POST005, or 'cancel' to exit): ").strip()
         if post_id.lower() == 'cancel':
             print("Action cancelled. Returning to main menu...")
             return
-        if not post_id:
+        if post_id == "":
             print("[ERROR] Post ID cannot be empty.")
             continue
         
@@ -181,33 +187,34 @@ def add_new_post_idea():
                 break
         
         if exists:
-            print(f"[ERROR] Post ID '{post_id}' already exists. Please choose a unique ID.")
+            print("[ERROR] Post ID '" + post_id + "' already exists. Please choose a unique ID.")
         else:
-            # Post ID is valid and unique
             break
 
-    # 3. Get platform name
-    valid_platforms = [p["name"] for p in platforms]
-    print(f"Available Platforms: {', '.join(valid_platforms)}")
+    # Get platform name
+    valid_platforms = []
+    for p in platforms:
+        valid_platforms.append(p["name"])
+        
+    print("Available Platforms: " + ", ".join(valid_platforms))
     while True:
         platform_choice = input("Enter target platform: ").strip()
-        # Find matching platform name (case-insensitive check for convenience, but we save original casing)
         match = None
         for p in valid_platforms:
             if p.lower() == platform_choice.lower():
                 match = p
                 break
         
-        if match:
+        if match != None:
             platform_name = match
             break
         else:
-            print(f"[ERROR] Invalid platform. Please choose from: {', '.join(valid_platforms)}")
+            print("[ERROR] Invalid platform. Please choose from: " + ", ".join(valid_platforms))
 
-    # 4. Get content caption (validate it doesn't contain pipe delimiter '|')
+    # Get content caption
     while True:
         caption = input("Enter content caption: ").strip()
-        if not caption:
+        if caption == "":
             print("[ERROR] Caption cannot be empty.")
             continue
         if "|" in caption:
@@ -215,13 +222,13 @@ def add_new_post_idea():
             continue
         break
 
-    # 5. Get scheduled date
+    # Get scheduled date
     scheduled_date = get_valid_date("Enter scheduled date (YYYY-MM-DD): ")
     if scheduled_date is None:
         print("Action cancelled. Returning to main menu...")
         return
 
-    # 6. Add new post with status set to Draft by default
+    # Add new post as Draft
     new_post = {
         "post_id": post_id,
         "platform": platform_name,
@@ -231,7 +238,7 @@ def add_new_post_idea():
     }
     posts.append(new_post)
     save_posts(posts)
-    print(f"\n[SUCCESS] Post '{post_id}' successfully added as a Draft!")
+    print("\n[SUCCESS] Post '" + post_id + "' successfully added as a Draft!")
 
 
 def update_post_status():
@@ -239,31 +246,29 @@ def update_post_status():
     Option 2: Update post status.
     Allows status updates: Draft -> Scheduled or Scheduled -> Posted.
     """
-    print("\n" + "=" * 40)
+    print("\n========================================")
     print("      UPDATE POST STATUS")
-    print("=" * 40)
+    print("========================================")
 
     posts = load_posts()
-    if not posts:
+    if len(posts) == 0:
         print("No posts found. Add a post first!")
         return
 
     post_id = input("Enter Post ID to update: ").strip()
     
-    # Find the post
     target_post = None
     for post in posts:
         if post["post_id"].lower() == post_id.lower():
             target_post = post
             break
 
-    if not target_post:
-        print(f"[ERROR] Post with ID '{post_id}' could not be found.")
+    if target_post is None:
+        print("[ERROR] Post with ID '" + post_id + "' could not be found.")
         return
 
-    # Check status and prompt transitions
     current_status = target_post["status"]
-    print(f"Current Status of post '{target_post['post_id']}': {current_status}")
+    print("Current Status of post '" + target_post['post_id'] + "': " + current_status)
 
     if current_status.lower() == "draft":
         print("1. Change status to 'Scheduled'")
@@ -295,40 +300,36 @@ def update_post_status():
     elif current_status.lower() == "posted":
         print("[INFO] This post is already 'Posted'. Status update is not required.")
     else:
-        print(f"[ERROR] Unknown post status: {current_status}")
+        print("[ERROR] Unknown post status: " + current_status)
 
 
 def record_engagement_metrics():
     """
     Option 3: Record engagement metrics for a posted piece of content.
-    Prevents recording metrics for Drafts or Scheduled posts.
     """
-    print("\n" + "=" * 40)
+    print("\n========================================")
     print("    RECORD ENGAGEMENT METRICS")
-    print("=" * 40)
+    print("========================================")
 
     posts = load_posts()
     post_id = input("Enter Post ID to record engagement: ").strip()
 
-    # Find the post
     target_post = None
     for post in posts:
         if post["post_id"].lower() == post_id.lower():
             target_post = post
             break
 
-    if not target_post:
-        print(f"[ERROR] Post with ID '{post_id}' does not exist.")
+    if target_post is None:
+        print("[ERROR] Post with ID '" + post_id + "' does not exist.")
         return
 
-    # Rubric-critical check: Engagement can only be logged for "Posted" content
     if target_post["status"].lower() != "posted":
-        print(f"[ERROR] Cannot log metrics. Post status is '{target_post['status']}'.")
+        print("[ERROR] Cannot log metrics. Post status is '" + target_post['status'] + "'.")
         print("Only posts with 'Posted' status can have engagement metrics.")
         return
 
-    # If status is "Posted", get engagement counts
-    print(f"Recording engagement for post: {target_post['caption'][:30]}...")
+    print("Recording engagement for post: " + target_post['caption'][:30] + "...")
     likes = get_non_negative_int("Enter number of Likes: ")
     comments = get_non_negative_int("Enter number of Comments: ")
     shares = get_non_negative_int("Enter number of Shares: ")
@@ -336,31 +337,35 @@ def record_engagement_metrics():
 
     engagement_list = load_engagement()
     
-    # Check if engagement already exists for this post, and update it
     existing_record = None
     for eng in engagement_list:
         if eng["post_id"].lower() == post_id.lower():
             existing_record = eng
             break
 
-    if existing_record:
+    if existing_record != None:
         existing_record["likes"] = likes
         existing_record["comments"] = comments
         existing_record["shares"] = shares
         existing_record["views"] = views
-        print(f"[SUCCESS] Engagement metrics updated for '{target_post['post_id']}'.")
+        print("[SUCCESS] Engagement metrics updated for '" + target_post['post_id'] + "'.")
     else:
         new_engagement = {
-            "post_id": target_post["post_id"], # Save with standard casing
+            "post_id": target_post["post_id"],
             "likes": likes,
             "comments": comments,
             "shares": shares,
             "views": views
         }
         engagement_list.append(new_engagement)
-        print(f"[SUCCESS] Engagement metrics logged for '{target_post['post_id']}'.")
+        print("[SUCCESS] Engagement metrics logged for '" + target_post['post_id'] + "'.")
 
     save_engagement(engagement_list)
+
+
+def get_post_date(post):
+    """Helper function to get post date for sorting without using lambda."""
+    return post["date"]
 
 
 def display_content_calendar():
@@ -368,52 +373,53 @@ def display_content_calendar():
     Option 4: Display content calendar.
     Shows posts sorted by scheduled date, platform, caption preview, and status.
     """
-    print("\n" + "=" * 60)
+    print("\n============================================================")
     print("                    CONTENT CALENDAR")
-    print("=" * 60)
+    print("============================================================")
 
     posts = load_posts()
-    if not posts:
+    if len(posts) == 0:
         print("No scheduled posts to show. Add some post ideas first!")
         return
 
-    # Sort posts by scheduled date string (YYYY-MM-DD sorts correctly alphabetically)
-    posts.sort(key=lambda x: x["date"])
+    # Sort posts by date using a named function instead of lambda
+    posts.sort(key=get_post_date)
 
-    # Header spacing
-    print(f"{'Post ID':<10} | {'Scheduled Date':<15} | {'Platform':<10} | {'Status':<10} | {'Caption Preview'}")
-    print("-" * 75)
+    print("Post ID    | Scheduled Date  | Platform   | Status     | Caption Preview")
+    print("---------------------------------------------------------------------------")
 
     for post in posts:
-        # Create a preview of the caption (truncated to 25 chars)
         caption = post["caption"]
         if len(caption) > 25:
             preview = caption[:22] + "..."
         else:
             preview = caption
 
-        print(f"{post['post_id']:<10} | {post['date']:<15} | {post['platform']:<10} | {post['status']:<10} | {preview}")
-    print("=" * 60)
+        # Basic string formatting with spacing
+        line = post['post_id'] + " " * (10 - len(post['post_id'])) + " | " + \
+               post['date'] + " " * (15 - len(post['date'])) + " | " + \
+               post['platform'] + " " * (10 - len(post['platform'])) + " | " + \
+               post['status'] + " " * (10 - len(post['status'])) + " | " + preview
+        print(line)
+    print("============================================================")
 
 
 def delete_post():
     """
     Option 5: Delete a post.
-    Fulfills the rubric criteria: "Proper handling of updates and deletions".
     Implements a cascading delete on engagement.txt.
     """
-    print("\n" + "=" * 40)
+    print("\n========================================")
     print("           DELETE POST")
-    print("=" * 40)
+    print("========================================")
 
     posts = load_posts()
-    if not posts:
+    if len(posts) == 0:
         print("No posts available to delete.")
         return
 
     post_id = input("Enter Post ID to delete: ").strip()
 
-    # Find post index
     found_index = -1
     for i in range(len(posts)):
         if posts[i]["post_id"].lower() == post_id.lower():
@@ -421,28 +427,30 @@ def delete_post():
             break
 
     if found_index == -1:
-        print(f"[ERROR] Post ID '{post_id}' could not be found.")
+        print("[ERROR] Post ID '" + post_id + "' could not be found.")
         return
 
     post_to_delete = posts[found_index]
-    print(f"\nAre you sure you want to delete this post?")
-    print(f"ID: {post_to_delete['post_id']}")
-    print(f"Platform: {post_to_delete['platform']}")
-    print(f"Caption: {post_to_delete['caption']}")
+    print("\nAre you sure you want to delete this post?")
+    print("ID: " + post_to_delete['post_id'])
+    print("Platform: " + post_to_delete['platform'])
+    print("Caption: " + post_to_delete['caption'])
     
     confirm = input("Type 'YES' to confirm deletion: ").strip()
 
     if confirm == "YES":
-        # Remove from posts list
-        deleted_post = posts.pop(found_index)
+        deleted_post = posts[found_index]
+        del posts[found_index]
         save_posts(posts)
-        print(f"\n[SUCCESS] Post '{deleted_post['post_id']}' has been deleted.")
+        print("\n[SUCCESS] Post '" + deleted_post['post_id'] + "' has been deleted.")
 
-        # Cascading delete in engagement.txt if exists
+        # Cascading delete in engagement.txt without list comprehensions
         engagement_list = load_engagement()
-        updated_engagement = [eng for eng in engagement_list if eng["post_id"].lower() != post_id.lower()]
+        updated_engagement = []
+        for eng in engagement_list:
+            if eng["post_id"].lower() != post_id.lower():
+                updated_engagement.append(eng)
         
-        # If any record was deleted from engagement, save it
         if len(engagement_list) != len(updated_engagement):
             save_engagement(updated_engagement)
             print("[INFO] Corresponding engagement metrics were also deleted to maintain database consistency.")
@@ -453,7 +461,6 @@ def delete_post():
 def compile_performance_report_data():
     """
     Helper function that computes statistics for the performance report.
-    Returns structured summary data or None if no engagement metrics exist.
     """
     platforms = load_platforms()
     posts = load_posts()
@@ -466,10 +473,12 @@ def compile_performance_report_data():
 
     for post in posts:
         p_name = post["platform"]
-        posts_per_platform[p_name] = posts_per_platform.get(p_name, 0) + 1
+        if p_name in posts_per_platform:
+            posts_per_platform[p_name] = posts_per_platform[p_name] + 1
+        else:
+            posts_per_platform[p_name] = 1
 
     # Match posts with engagement for metric analysis
-    # Store in a dictionary for fast lookup by post_id
     eng_lookup = {}
     for eng in engagement_list:
         eng_lookup[eng["post_id"].lower()] = eng
@@ -507,17 +516,20 @@ def compile_performance_report_data():
             eng = eng_lookup[pid_lower]
             total_eng = eng["likes"] + eng["comments"] + eng["shares"] + eng["views"]
             p_name = post["platform"]
-            platform_interaction[p_name] = platform_interaction.get(p_name, 0) + total_eng
+            if p_name in platform_interaction:
+                platform_interaction[p_name] = platform_interaction[p_name] + total_eng
+            else:
+                platform_interaction[p_name] = total_eng
 
-    # Find the platform with max interaction value
+    # Find the platform with max interaction value (without using dict.items())
     most_interactive_platform = None
     max_platform_interaction = -1
-    for p_name, total_int in platform_interaction.items():
+    for p_name in platform_interaction:
+        total_int = platform_interaction[p_name]
         if total_int > max_platform_interaction:
             max_platform_interaction = total_int
             most_interactive_platform = p_name
 
-    # Return results in a structured dictionary
     return {
         "posts_per_platform": posts_per_platform,
         "best_post": best_post,
@@ -531,38 +543,37 @@ def generate_performance_report():
     Option 6: Generate performance report.
     Displays summary to command-line screen.
     """
-    print("\n" + "=" * 50)
+    print("\n==================================================")
     print("             PERFORMANCE REPORT SUMMARY")
-    print("=" * 50)
+    print("==================================================")
 
     report = compile_performance_report_data()
 
-    # Display posts per platform
     print("\n--- Total Posts Per Platform ---")
-    for platform, count in report["posts_per_platform"].items():
-        print(f" - {platform}: {count} post(s)")
+    posts_per_p = report["posts_per_platform"]
+    for platform in posts_per_p:
+        count = posts_per_p[platform]
+        print(" - " + platform + ": " + str(count) + " post(s)")
 
-    # Display best-performing post
     print("\n--- Best-Performing Post ---")
     best = report["best_post"]
-    if best:
-        print(f" Post ID: {best['post_id']}")
-        print(f" Platform: {best['platform']}")
-        print(f" Caption: \"{best['caption']}\"")
-        print(f" Engagement Breakdown: Likes: {best['likes']} | Comments: {best['comments']} | Shares: {best['shares']} | Views: {best['views']}")
-        print(f" Total Interaction Value: {best['total_engagement']}")
+    if best != None:
+        print(" Post ID: " + str(best['post_id']))
+        print(" Platform: " + str(best['platform']))
+        print(" Caption: \"" + str(best['caption']) + "\"")
+        print(" Engagement Breakdown: Likes: " + str(best['likes']) + " | Comments: " + str(best['comments']) + " | Shares: " + str(best['shares']) + " | Views: " + str(best['views']))
+        print(" Total Interaction Value: " + str(best['total_engagement']))
     else:
         print(" No posts have engagement metrics logged yet.")
 
-    # Display platform with most interaction
     print("\n--- Platform With Most Interaction ---")
-    if report["most_interactive_platform"] and report["max_platform_interaction"] > 0:
-        print(f" Platform: {report['most_interactive_platform']}")
-        print(f" Total Interaction Points: {report['max_platform_interaction']}")
+    if report["most_interactive_platform"] != None and report["max_platform_interaction"] > 0:
+        print(" Platform: " + str(report['most_interactive_platform']))
+        print(" Total Interaction Points: " + str(report['max_platform_interaction']))
     else:
         print(" No platform interactions logged yet.")
 
-    print("\n" + "=" * 50)
+    print("\n==================================================")
 
 
 def export_report_to_file():
@@ -570,47 +581,50 @@ def export_report_to_file():
     Option 7: Export report to file (e.g. report.txt).
     Saves the performance summary to a text file.
     """
-    print("\n" + "=" * 40)
+    print("\n========================================")
     print("          EXPORT REPORT TO FILE")
-    print("=" * 40)
+    print("========================================")
 
     report = compile_performance_report_data()
     export_filename = "report.txt"
 
     try:
-        with open(export_filename, "w") as f:
-            f.write("=============================================\n")
-            f.write("      SOCIAL MEDIA PERFORMANCE REPORT\n")
-            f.write(f"      Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write("=============================================\n\n")
+        f = open(export_filename, "w")
+        f.write("=============================================\n")
+        f.write("      SOCIAL MEDIA PERFORMANCE REPORT\n")
+        f.write("      Generated on: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + "\n")
+        f.write("=============================================\n\n")
 
-            f.write("--- Total Posts Per Platform ---\n")
-            for platform, count in report["posts_per_platform"].items():
-                f.write(f" - {platform}: {count} post(s)\n")
+        f.write("--- Total Posts Per Platform ---\n")
+        posts_per_p = report["posts_per_platform"]
+        for platform in posts_per_p:
+            count = posts_per_p[platform]
+            f.write(" - " + platform + ": " + str(count) + " post(s)\n")
 
-            f.write("\n--- Best-Performing Post ---\n")
-            best = report["best_post"]
-            if best:
-                f.write(f" Post ID: {best['post_id']}\n")
-                f.write(f" Platform: {best['platform']}\n")
-                f.write(f" Caption: \"{best['caption']}\"\n")
-                f.write(f" Engagement Breakdown: Likes: {best['likes']} | Comments: {best['comments']} | Shares: {best['shares']} | Views: {best['views']}\n")
-                f.write(f" Total Interaction Value: {best['total_engagement']}\n")
-            else:
-                f.write(" No posts have engagement metrics logged yet.\n")
+        f.write("\n--- Best-Performing Post ---\n")
+        best = report["best_post"]
+        if best != None:
+            f.write(" Post ID: " + str(best['post_id']) + "\n")
+            f.write(" Platform: " + str(best['platform']) + "\n")
+            f.write(" Caption: \"" + str(best['caption']) + "\"\n")
+            f.write(" Engagement Breakdown: Likes: " + str(best['likes']) + " | Comments: " + str(best['comments']) + " | Shares: " + str(best['shares']) + " | Views: " + str(best['views']) + "\n")
+            f.write(" Total Interaction Value: " + str(best['total_engagement']) + "\n")
+        else:
+            f.write(" No posts have engagement metrics logged yet.\n")
 
-            f.write("\n--- Platform With Most Interaction ---\n")
-            if report["most_interactive_platform"] and report["max_platform_interaction"] > 0:
-                f.write(f" Platform: {report['most_interactive_platform']}\n")
-                f.write(f" Total Interaction Points: {report['max_platform_interaction']}\n")
-            else:
-                f.write(" No platform interactions logged yet.\n")
+        f.write("\n--- Platform With Most Interaction ---\n")
+        if report["most_interactive_platform"] != None and report["max_platform_interaction"] > 0:
+            f.write(" Platform: " + str(report['most_interactive_platform']) + "\n")
+            f.write(" Total Interaction Points: " + str(report['max_platform_interaction']) + "\n")
+        else:
+            f.write(" No platform interactions logged yet.\n")
 
-            f.write("\n=============================================\n")
+        f.write("\n=============================================\n")
+        f.close()
 
-        print(f"[SUCCESS] Performance report successfully exported to '{export_filename}'!")
+        print("[SUCCESS] Performance report successfully exported to '" + export_filename + "'!")
     except Exception as e:
-        print(f"[ERROR] Failed to export report. Reason: {e}")
+        print("[ERROR] Failed to export report. Reason: " + str(e))
 
 
 # ==========================================
@@ -620,15 +634,13 @@ def export_report_to_file():
 def main():
     """
     Main menu driver function.
-    Demonstrates CLI, loops, error-handling validation.
     """
-    # Ensure platform list is seeded initially
     load_platforms()
 
     while True:
-        print("\n" + "=" * 45)
+        print("\n=============================================")
         print("    SOCIAL MEDIA CONTENT PLANNER - MAIN MENU")
-        print("=" * 45)
+        print("=============================================")
         print(" 1. Add a New Post Idea")
         print(" 2. Update Post Status")
         print(" 3. Record Engagement Metrics")
@@ -637,11 +649,10 @@ def main():
         print(" 6. Generate Performance Report")
         print(" 7. Export Performance Report to File")
         print(" 8. Exit")
-        print("=" * 45)
+        print("=============================================")
         
         choice = input("Enter choice (1-8): ").strip()
 
-        # Handle options gracefully
         if choice == "1":
             add_new_post_idea()
         elif choice == "2":
