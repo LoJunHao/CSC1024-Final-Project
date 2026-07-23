@@ -244,7 +244,7 @@ def add_new_post_idea():
 def update_post_status():
     """
     Option 2: Update post status.
-    Allows status updates: Draft -> Scheduled or Scheduled -> Posted.
+    Allows status updates: Draft -> Scheduled, Draft -> Posted, or Scheduled -> Posted.
     """
     print("\n========================================")
     print("      UPDATE POST STATUS")
@@ -272,12 +272,17 @@ def update_post_status():
 
     if current_status.lower() == "draft":
         print("1. Change status to 'Scheduled'")
-        print("2. Cancel")
-        choice = input("Enter choice (1-2): ").strip()
+        print("2. Change status to 'Posted'")
+        print("3. Cancel")
+        choice = input("Enter choice (1-3): ").strip()
         if choice == "1":
             target_post["status"] = "Scheduled"
             save_posts(posts)
             print("[SUCCESS] Post status updated to 'Scheduled'.")
+        elif choice == "2":
+            target_post["status"] = "Posted"
+            save_posts(posts)
+            print("[SUCCESS] Post status updated to 'Posted'.")
         else:
             print("Update cancelled.")
 
