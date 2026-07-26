@@ -1,3 +1,4 @@
+import os
 import datetime
 
 # Define filenames for the persistent data files
@@ -17,16 +18,15 @@ def load_platforms():
     """
     platforms = []
     
-    # Try reading the file; create default if file does not exist
-    try:
-        f = open(PLATFORMS_FILE, 'r')
-    except:
+    # Check if file exists; create default if file does not exist
+    if not os.path.exists(PLATFORMS_FILE):
         f = open(PLATFORMS_FILE, 'w')
         f.write("P1|Instagram|12500\n")
         f.write("P2|TikTok|45000\n")
         f.write("P3|X|8200\n")
         f.close()
-        f = open(PLATFORMS_FILE, 'r')
+
+    f = open(PLATFORMS_FILE, 'r')
 
     for line in f:
         line = line.strip()
@@ -50,11 +50,10 @@ def load_posts():
     Fields: Post ID|Platform Name|Content Caption|Scheduled Date|Status
     """
     posts = []
-    try:
-        f = open(POSTS_FILE, 'r')
-    except:
+    if not os.path.exists(POSTS_FILE):
         return posts
         
+    f = open(POSTS_FILE, 'r')
     for line in f:
         line = line.strip()
         if line == "":
@@ -90,11 +89,10 @@ def load_engagement():
     Fields: Post ID|Likes|Comments|Shares|Views
     """
     engagement = []
-    try:
-        f = open(ENGAGEMENT_FILE, 'r')
-    except:
+    if not os.path.exists(ENGAGEMENT_FILE):
         return engagement
         
+    f = open(ENGAGEMENT_FILE, 'r')
     for line in f:
         line = line.strip()
         if line == "":
@@ -345,7 +343,14 @@ def record_engagement_metrics():
         print("Only posts with 'Posted' status can have engagement metrics.")
         return
 
-    print("Recording engagement for post: " + target_post['caption'][:30] + "...")
+    caption_text = target_post['caption']
+    if len(caption_text) > 30:
+        short_caption = ""
+        for i in range(30):
+            short_caption = short_caption + caption_text[i]
+        caption_text = short_caption + "..."
+
+    print("Recording engagement for post: " + caption_text)
     likes = get_non_negative_int("Enter number of Likes: ")
     comments = get_non_negative_int("Enter number of Comments: ")
     shares = get_non_negative_int("Enter number of Shares: ")
@@ -411,7 +416,10 @@ def display_content_calendar():
     for post in posts:
         caption = post["caption"]
         if len(caption) > 25:
-            preview = caption[:22] + "..."
+            preview = ""
+            for char_idx in range(22):
+                preview = preview + caption[char_idx]
+            preview = preview + "..."
         else:
             preview = caption
 
@@ -470,7 +478,14 @@ def delete_post():
 
     if confirm == "YES":
         deleted_post = posts[found_index]
-        del posts[found_index]
+        
+        # Basic list element deletion using a loop to build a new list
+        updated_posts = []
+        for i in range(len(posts)):
+            if i != found_index:
+                updated_posts.append(posts[i])
+        posts = updated_posts
+
         save_posts(posts)
         print("\n[SUCCESS] Post '" + deleted_post['post_id'] + "' has been deleted.")
 
@@ -618,46 +633,46 @@ def export_report_to_file():
     report = compile_performance_report_data()
     export_filename = "report.txt"
 
-    try:
-        f = open(export_filename, "w")
-        f.write("=============================================\n")
-        f.write("      SOCIAL MEDIA PERFORMANCE REPORT\n")
-        now_str = str(datetime.datetime.now())
-        if len(now_str) >= 19:
-            now_str = now_str[:19]
-        f.write("      Generated on: " + now_str + "\n")
-        f.write("=============================================\n\n")
+    f = open(export_filename, "w")
+    f.write("=============================================\n")
+    f.write("      SOCIAL MEDIA PERFORMANCE REPORT\n")
+    now_str = str(datetime.datetime.now())
+    if len(now_str) >= 19:
+        short_now = ""
+        for idx in range(19):
+            short_now = short_now + now_str[idx]
+        now_str = short_now
+    f.write("      Generated on: " + now_str + "\n")
+    f.write("=============================================\n\n")
 
-        f.write("--- Total Posts Per Platform ---\n")
-        posts_per_p = report["posts_per_platform"]
-        for platform in posts_per_p:
-            count = posts_per_p[platform]
-            f.write(" - " + platform + ": " + str(count) + " post(s)\n")
+    f.write("--- Total Posts Per Platform ---\n")
+    posts_per_p = report["posts_per_platform"]
+    for platform in posts_per_p:
+        count = posts_per_p[platform]
+        f.write(" - " + platform + ": " + str(count) + " post(s)\n")
 
-        f.write("\n--- Best-Performing Post ---\n")
-        best = report["best_post"]
-        if best != None:
-            f.write(" Post ID: " + str(best['post_id']) + "\n")
-            f.write(" Platform: " + str(best['platform']) + "\n")
-            f.write(" Caption: \"" + str(best['caption']) + "\"\n")
-            f.write(" Engagement Breakdown: Likes: " + str(best['likes']) + " | Comments: " + str(best['comments']) + " | Shares: " + str(best['shares']) + " | Views: " + str(best['views']) + "\n")
-            f.write(" Total Interaction Value: " + str(best['total_engagement']) + "\n")
-        else:
-            f.write(" No posts have engagement metrics logged yet.\n")
+    f.write("\n--- Best-Performing Post ---\n")
+    best = report["best_post"]
+    if best != None:
+        f.write(" Post ID: " + str(best['post_id']) + "\n")
+        f.write(" Platform: " + str(best['platform']) + "\n")
+        f.write(" Caption: \"" + str(best['caption']) + "\"\n")
+        f.write(" Engagement Breakdown: Likes: " + str(best['likes']) + " | Comments: " + str(best['comments']) + " | Shares: " + str(best['shares']) + " | Views: " + str(best['views']) + "\n")
+        f.write(" Total Interaction Value: " + str(best['total_engagement']) + "\n")
+    else:
+        f.write(" No posts have engagement metrics logged yet.\n")
 
-        f.write("\n--- Platform With Most Interaction ---\n")
-        if report["most_interactive_platform"] != None and report["max_platform_interaction"] > 0:
-            f.write(" Platform: " + str(report['most_interactive_platform']) + "\n")
-            f.write(" Total Interaction Points: " + str(report['max_platform_interaction']) + "\n")
-        else:
-            f.write(" No platform interactions logged yet.\n")
+    f.write("\n--- Platform With Most Interaction ---\n")
+    if report["most_interactive_platform"] != None and report["max_platform_interaction"] > 0:
+        f.write(" Platform: " + str(report['most_interactive_platform']) + "\n")
+        f.write(" Total Interaction Points: " + str(report['max_platform_interaction']) + "\n")
+    else:
+        f.write(" No platform interactions logged yet.\n")
 
-        f.write("\n=============================================\n")
-        f.close()
+    f.write("\n=============================================\n")
+    f.close()
 
-        print("[SUCCESS] Performance report successfully exported to '" + export_filename + "'!")
-    except Exception as e:
-        print("[ERROR] Failed to export report. Reason: " + str(e))
+    print("[SUCCESS] Performance report successfully exported to '" + export_filename + "'!")
 
 
 # ==========================================
