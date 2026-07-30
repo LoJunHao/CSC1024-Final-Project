@@ -1,180 +1,367 @@
-# Social Media Content Planner & Performance Reporter
+# 📱 Social Media Content Planner — Comprehensive Source Code Documentation
 
-An easy-to-digest technical and operational guide for the Social Media Content Planner project. This project is a command-line interface (CLI) tool designed to manage social media posts, track post lifecycle status, record engagement metrics, and compile performance reports.
-
----
-
-## 🛠️ Project Structure & Architecture
-
-The application is structured as a single-executable Python CLI utility that leverages plain-text flat files as its persistent database layer.
-
-### Directory Layout
-
-*   [planner.py](file:///c:/Users/Administrator/Documents/Final%20Project/planner.py) — Core application entry point, containing data handlers, validation logic, CLI menus, and business logic.
-*   [test_planner.py](file:///c:/Users/Administrator/Documents/Final%20Project/test_planner.py) — Unit test suite verifying platform/post loading, data schema integrity, and report compilation.
-*   [platforms.txt](file:///c:/Users/Administrator/Documents/Final%20Project/platforms.txt) — Flat-file database storing details of target platforms.
-*   [posts.txt](file:///c:/Users/Administrator/Documents/Final%20Project/posts.txt) — Flat-file database storing post ideas, captions, schedules, and lifecycle status.
-*   [engagement.txt](file:///c:/Users/Administrator/Documents/Final%20Project/engagement.txt) — Flat-file database storing likes, comments, shares, and views for published posts.
+A command-line interface (CLI) application developed in Python for content creators, marketing managers, and social media strategists to plan post ideas, track publication statuses, record engagement metrics, display sorted content calendars, and generate performance reports.
 
 ---
 
-## 📊 Database & Data Schemas
-
-The database uses pipe-delimited (`|`) values to separate fields. Data is read, updated, and saved sequentially.
-
-### 1. Platforms Schema (`platforms.txt`)
-Stores the available channels and their current follower counts.
-*   **Format**: `Platform ID|Platform Name|Follower Count`
-*   **Example**:
-    ```text
-    P1|Instagram|12500
-    P2|TikTok|45000
-    P3|X|8200
-    ```
-
-### 2. Posts Schema (`posts.txt`)
-Tracks post attributes, scheduling dates, and their publishing status.
-*   **Format**: `Post ID|Platform Name|Content Caption|Scheduled Date|Status`
-*   **Example**:
-    ```text
-    POST001|Instagram|Check out our new project launch!|2026-08-01|Scheduled
-    POST002|TikTok|A day in the life of a computer science student|2026-07-10|Posted
-    ```
-
-### 3. Engagement Schema (`engagement.txt`)
-Stores raw metric logs for posted content to compute performance summaries.
-*   **Format**: `Post ID|Likes|Comments|Shares|Views`
-*   **Example**:
-    ```text
-    POST002|1200|85|45|15000
-    POST003|150|12|8|850
-    ```
+## 📌 Table of Contents
+1. [🏛️ System Architecture & Design Overview](#%EF%B8%8F-system-architecture--design-overview)
+2. [📂 Directory & Repository Structure](#-directory--repository-structure)
+3. [🗄️ Data Storage & Flat-File Schemas](#%EF%B8%8F-data-storage--flat-file-schemas)
+4. [🔄 Post Lifecycle & State Machine](#-post-lifecycle--state-machine)
+5. [⚙️ Detailed Function Documentation (`planner.py`)](#%EF%B8%8F-detailed-function-documentation-plannerpy)
+   - [💾 File Handling & Persistence Functions](#-file-handling--persistence-functions)
+   - [🔍 Validation Helper Functions](#-validation-helper-functions)
+   - [🎯 Core Application Features](#-core-application-features)
+   - [📈 Analytics & Reporting Functions](#-analytics--reporting-functions)
+   - [🖥️ Main Application Driver](#%EF%B8%8F-main-application-driver)
+6. [🔀 Algorithmic Flowcharts](#-algorithmic-flowcharts)
+   - [🗓️ Selection Sort Content Calendar Workflow](#%EF%B8%8F-selection-sort-content-calendar-workflow)
+   - [🗑️ Cascading Deletion Workflow](#%EF%B8%8F-cascading-deletion-workflow)
+7. [🧪 Unit Testing Suite (`test_planner.py`)](#-unit-testing-suite-test_plannerpy)
+8. [🛠️ Installation & Execution Guide](#%EF%B8%8F-installation--execution-guide)
 
 ---
 
-## 🔄 Post Status Lifecycle
+## 🏛️ System Architecture & Design Overview
 
-Posts navigate through three main states. Status logic prevents recording metrics until a post reaches the terminal `Posted` state.
+The Social Media Content Planner is designed as a standalone Python CLI application. It relies entirely on Python standard library modules (`os`, `datetime`, `unittest`), requiring no third-party package installations.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Draft : Added (Default)
-    Draft --> Scheduled : Transition 1
-    Scheduled --> Draft : Revert
-    Scheduled --> Posted : Transition 2
-    Posted --> [*] : Locked (Metrics Active)
-```
+### 🌟 Key Architectural Principles:
+* ⚡ **Zero External Dependencies**: Uses native file I/O operations (`open()`, `read()`, `write()`) and custom parsing logic.
+* 💾 **Flat-File Persistence**: Stores application state in pipe-delimited (`|`) text files (`platforms.txt`, `posts.txt`, `engagement.txt`).
+* 🛡️ **Defensive Validation & Integrity**: Validates input syntax manually (date format validation, non-negative integers, disallowing delimiter characters in text) and guarantees referential integrity through cascading deletion.
+* 🧮 **Custom Algorithmic Logic**: Implements an in-memory Selection Sort algorithm for sorting content calendar entries by date without relying on external sorting libraries.
 
-> [!NOTE]
-> Metrics can *only* be logged for posts with a `Posted` status. Attempts to log engagement for `Draft` or `Scheduled` statuses are blocked.
-
----
-
-## 🗺️ Application Workflow Flowchart
-
-Below is a flowchart highlighting the main program loop, input validations, menu selections, database updates, and lifecycle validations.
+### 📊 High-Level Architecture Diagram
 
 ```mermaid
 flowchart TD
-    Start([Start Application]) --> SeedPlatforms[Seed/Load platforms.txt]
-    SeedPlatforms --> MainMenu{Main Menu Selection}
+    classDef ui fill:#4f46e5,stroke:#3730a3,color:#ffffff,stroke-width:2px;
+    classDef core fill:#0284c7,stroke:#0369a1,color:#ffffff,stroke-width:2px;
+    classDef storage fill:#059669,stroke:#047857,color:#ffffff,stroke-width:2px;
+    classDef test fill:#d97706,stroke:#b45309,color:#ffffff,stroke-width:2px;
 
-    MainMenu -->|1. Add Post Idea| AddPost[Add Post Idea]
-    AddPost --> CheckID{Is Post ID unique?}
-    CheckID -->|No| AddPost
-    CheckID -->|Yes| ValidPlatform{Is platform in platforms.txt?}
-    ValidPlatform -->|No| AddPost
-    ValidPlatform -->|Yes| SanitizedCaption{No pipe characters?}
-    SanitizedCaption -->|No| AddPost
-    SanitizedCaption -->|Yes| ValidDate{Is date YYYY-MM-DD?}
-    ValidDate -->|No| AddPost
-    ValidDate -->|Yes| SaveDraft[Save to posts.txt as Draft]
-    SaveDraft --> MainMenu
+    User(["👤 User (CLI Interface)"]):::ui
+    Menu["🖥️ Main Menu Driver (main)"]:::core
+    
+    subgraph Core Logic ["⚙️ Core Application Logic (planner.py)"]
+        Menu --> AddPost["➕ Add New Post Idea"]:::core
+        Menu --> UpdateStatus["🔄 Update Post Status"]:::core
+        Menu --> RecordEng["📊 Record Engagement Metrics"]:::core
+        Menu --> ShowCal["🗓️ Display Content Calendar"]:::core
+        Menu --> DelPost["🗑️ Delete Post (Cascading)"]:::core
+        Menu --> Report["📈 Generate Performance Report"]:::core
+        Menu --> Export["📄 Export Report to File"]:::core
+    end
 
-    MainMenu -->|2. Update Post Status| ChoosePostUpdate[Select Post ID]
-    ChoosePostUpdate --> CurrentStatus{Current Status?}
-    CurrentStatus -->|Draft| SetScheduled[Change to Scheduled]
-    CurrentStatus -->|Scheduled| SetPostedOrDraft{Posted or Draft?}
-    SetPostedOrDraft -->|Posted| SetPosted[Change to Posted]
-    SetPostedOrDraft -->|Draft| SetDraftBack[Change to Draft]
-    CurrentStatus -->|Posted| AlreadyPosted[Locked: No Updates Needed]
-    SetScheduled & SetPosted & SetDraftBack & AlreadyPosted --> SaveStatusUpdate[Save to posts.txt]
-    SaveStatusUpdate --> MainMenu
+    subgraph Data Layer ["🗄️ Flat-File Persistence Layer"]
+        PlatformsFile[("📱 platforms.txt")]:::storage
+        PostsFile[("📝 posts.txt")]:::storage
+        EngFile[("📊 engagement.txt")]:::storage
+        ReportFile[("📄 report.txt")]:::storage
+    end
 
-    MainMenu -->|3. Record Metrics| RecordMetrics[Select Post ID]
-    RecordMetrics --> IsPosted{Is status Posted?}
-    IsPosted -->|No| MetricsDenied[Error: Post must be Posted]
-    IsPosted -->|Yes| GetMetrics[Input Likes, Comments, Shares, Views]
-    GetMetrics --> SaveMetrics[Save to engagement.txt]
-    MetricsDenied & SaveMetrics --> MainMenu
+    subgraph Testing ["🧪 Automated Unit Tests"]
+        UnitTestSuite["🧪 TestPlanner Suite (test_planner.py)"]:::test
+    end
 
-    MainMenu -->|4. Calendar| DisplayCalendar[Read & sort posts.txt by Date]
-    DisplayCalendar --> ShowCalendar[Print Sorted Table]
-    ShowCalendar --> MainMenu
+    User <--> Menu
+    AddPost <--> PlatformsFile
+    AddPost <--> PostsFile
+    UpdateStatus <--> PostsFile
+    RecordEng <--> PostsFile
+    RecordEng <--> EngFile
+    ShowCal <--> PostsFile
+    DelPost <--> PostsFile
+    DelPost <--> EngFile
+    Report <--> PlatformsFile
+    Report <--> PostsFile
+    Report <--> EngFile
+    Export --> ReportFile
 
-    MainMenu -->|5. Delete Post| ConfirmDelete[Confirm Deletion of Post ID]
-    ConfirmDelete -->|Yes| RemovePost[Remove from posts.txt]
-    RemovePost --> CascadeDelete[Delete corresponding engagement from engagement.txt]
-    CascadeDelete --> MainMenu
-    ConfirmDelete -->|No| MainMenu
-
-    MainMenu -->|6 & 7. Reports| ComputeStats[Compute stats: posts count, best post, most active platform]
-    ComputeStats --> PrintOrExport{Option 6 or 7?}
-    PrintOrExport -->|6. Generate| PrintReport[Print to Console]
-    PrintOrExport -->|7. Export| ExportReport[Write to report.txt]
-    PrintReport & ExportReport --> MainMenu
-
-    MainMenu -->|8. Exit| End([Exit Application])
+    UnitTestSuite -->|"Executes Assertions"| Core Logic
 ```
 
 ---
 
-## 🚀 Core Functionalities & Workflows
+## 📂 Directory & Repository Structure
 
-### ➕ 1. Add Post Idea
-*   Validates uniqueness of `Post ID`.
-*   Forces target platform selection from the curated list in `platforms.txt`.
-*   Sanitizes input to disallow the pipe delimiter (`|`) in content captions.
-*   Enforces date validation in `YYYY-MM-DD` format.
-*   Sets status to `Draft` by default.
-
-### 🔄 2. Update Post Status
-*   Performs transitions between `Draft`, `Scheduled`, and `Posted`.
-*   Updates the file representation in `posts.txt`.
-
-### 📈 3. Record Engagement Metrics
-*   Restricted to posts in `Posted` state.
-*   Prompts and validates non-negative integers for Likes, Comments, Shares, and Views.
-*   Saves/updates records in `engagement.txt`.
-
-### 📅 4. Display Content Calendar
-*   Retrieves all post logs.
-*   Sorts posts chronologically by scheduled date.
-*   Prints formatted tables featuring a truncated caption preview.
-
-### 🗑️ 5. Delete Post Idea
-*   Triggers cascading deletion: removing the post from `posts.txt` automatically triggers the cleanup of matching metrics in `engagement.txt` to keep the database consistent.
-
-### 📊 6. Performance Report Generation & Export
-*   Computes:
-    1.  **Total Posts Per Platform**: Post count breakdown across channels.
-    2.  **Best-Performing Post**: Found by maximizing interaction sum (Likes + Comments + Shares + Views).
-    3.  **Top Platform**: The channel yielding the highest combined interaction points.
-*   Offers CLI output summary or export as a text report to `report.txt`.
+```text
+CSC1024-Final-Project-main/
+├── 📊 engagement.txt     # Persistent storage for engagement metrics (likes, comments, shares, views)
+├── 📜 LICENSE            # MIT Software License file
+├── ⚙️ planner.py         # Main source code containing core business logic, UI main menu, & file I/O
+├── 📱 platforms.txt      # Persistent storage for available social media platforms and follower counts
+├── 📝 posts.txt          # Persistent storage for scheduled and drafted content posts
+├── 📑 readme.md          # Comprehensive technical documentation with Mermaid.js diagrams & emojis
+└── 🧪 test_planner.py    # Unit test suite validating data loading and performance reporting logic
+```
 
 ---
 
-## 🧪 Testing & Verification
+## 🗄️ Data Storage & Flat-File Schemas
 
-The suite contains tests validation using Python's built-in `unittest` library.
+The application uses custom pipe-delimited (`|`) text files for persistent storage.
 
-To run the verification suite, execute the following command in the project directory:
+### 📐 Entity-Relationship Diagram
+
+```mermaid
+erDiagram
+    PLATFORM {
+        string platform_id PK "e.g. P1, P2"
+        string name "e.g. Instagram, TikTok, X"
+        int followers "Follower count"
+    }
+    
+    POST {
+        string post_id PK "e.g. POST001"
+        string platform FK "References PLATFORM name"
+        string caption "Content caption string"
+        string date "YYYY-MM-DD format"
+        string status "Draft | Scheduled | Posted"
+    }
+    
+    ENGAGEMENT {
+        string post_id PK, FK "References POST post_id"
+        int likes "Number of likes"
+        int comments "Number of comments"
+        int shares "Number of shares"
+        int views "Number of views"
+    }
+
+    PLATFORM ||--o{ POST : "publishes to"
+    POST ||--o| ENGAGEMENT : "tracks metrics (when Posted)"
+```
+
+### 📋 File Schemas Breakdown
+
+#### 1. 📱 Platforms File (`platforms.txt`)
+Stores registered social media platforms.
+* **Format**: `Platform ID|Platform Name|Follower Count`
+* **Example**:
+  ```text
+  P1|Instagram|12500
+  P2|TikTok|45000
+  P3|X|8200
+  ```
+
+#### 2. 📝 Posts File (`posts.txt`)
+Stores content ideas and scheduled post entries.
+* **Format**: `Post ID|Platform Name|Content Caption|Scheduled Date|Status`
+* **Allowed Statuses**: `Draft`, `Scheduled`, `Posted`
+* **Example**:
+  ```text
+  POST001|Instagram|Check out our new project launch!|2026-08-01|Scheduled
+  POST002|TikTok|A day in the life of a computer science student|2026-07-10|Posted
+  POST003|X|Excited to share that we are starting our final programming project today!|2026-07-09|Posted
+  POST004|Instagram|Sneak peek of the new UI design!|2026-08-05|Draft
+  ```
+
+#### 3. 📊 Engagement Metrics File (`engagement.txt`)
+Stores performance metrics for published (`Posted`) content.
+* **Format**: `Post ID|Likes|Comments|Shares|Views`
+* **Example**:
+  ```text
+  POST002|1200|85|45|15000
+  POST003|150|12|8|850
+  ```
+
+---
+
+## 🔄 Post Lifecycle & State Machine
+
+Posts transition through strict state rules managed by `update_post_status()`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : 📝 Post Created (Option 1)
+    
+    Draft --> Scheduled : 📅 Schedule Date Confirmed (Option 2)
+    Draft --> Posted : 🚀 Direct Publishing (Option 2)
+    
+    Scheduled --> Draft : ↩️ Reverted to Draft (Option 2)
+    Scheduled --> Posted : 🚀 Marked as Published (Option 2)
+    
+    state Posted {
+        [*] --> PublishedState
+        PublishedState --> LogEngagement : 📊 Record Metrics (Option 3)
+        LogEngagement --> AnalyticsReady : 📈 Included in Performance Report (Option 6/7)
+    }
+    
+    Draft --> [*] : 🗑️ Deleted (Option 5)
+    Scheduled --> [*] : 🗑️ Deleted (Option 5)
+    Posted --> [*] : 🗑️ Cascading Deleted (Option 5)
+```
+
+---
+
+## ⚙️ Detailed Function Documentation (`planner.py`)
+
+### 💾 File Handling & Persistence Functions
+
+#### 📱 `load_platforms()`
+* **Purpose**: Reads `platforms.txt` and returns a list of platform dictionaries.
+* **Return Type**: `list[dict]` (Keys: `platform_id`, `name`, `followers`)
+
+#### 📝 `load_posts()`
+* **Purpose**: Reads `posts.txt` and loads all post records into memory.
+* **Return Type**: `list[dict]` (Keys: `post_id`, `platform`, `caption`, `date`, `status`)
+
+#### 💾 `save_posts(posts)`
+* **Purpose**: Writes the in-memory list of post dictionaries back to `posts.txt`.
+
+#### 📊 `load_engagement()`
+* **Purpose**: Reads `engagement.txt` and loads post engagement records.
+* **Return Type**: `list[dict]` (Keys: `post_id`, `likes`, `comments`, `shares`, `views`)
+
+#### 💾 `save_engagement(engagement_list)`
+* **Purpose**: Saves updated engagement records to `engagement.txt`.
+
+---
+
+### 🔍 Validation Helper Functions
+
+#### 📅 `get_valid_date(prompt)`
+* **Purpose**: Interactively prompts and validates user input for calendar dates (`YYYY-MM-DD`). Supports `'cancel'` abort.
+
+#### 🔢 `get_non_negative_int(prompt)`
+* **Purpose**: Prompts the user for numeric metrics and validates non-negative integer values (`.isdigit()`).
+
+---
+
+### 🎯 Core Application Features
+
+#### ➕ `add_new_post_idea()` (Option 1)
+* **Purpose**: Interactive workflow to add a new content draft with validation for unique ID, platform matching, caption delimiter checks, and valid dates.
+
+#### 🔄 `update_post_status()` (Option 2)
+* **Purpose**: Manages state transitions (`Draft` $\rightarrow$ `Scheduled`/`Posted`; `Scheduled` $\rightarrow$ `Posted`/`Draft`).
+
+#### 📊 `record_engagement_metrics()` (Option 3)
+* **Purpose**: Logs performance metrics (likes, comments, shares, views) for published content (`status == "Posted"`).
+
+#### 🗓️ `display_content_calendar()` (Option 4)
+* **Purpose**: Renders a formatted tabular calendar of posts sorted by date via Selection Sort.
+
+#### 🗑️ `delete_post()` (Option 5)
+* **Purpose**: Removes a post from `posts.txt` and sweeps matching records from `engagement.txt` (cascading delete).
+
+---
+
+### 📈 Analytics & Reporting Functions
+
+#### 📊 `compile_performance_report_data()`
+* **Purpose**: Aggregates statistics: posts count per platform, best-performing post by max interaction score ($\sum \text{likes, comments, shares, views}$), and most interactive platform.
+
+#### 🖥️ `generate_performance_report()` (Option 6)
+* **Purpose**: Prints summary performance report to stdout.
+
+#### 📄 `export_report_to_file()` (Option 7)
+* **Purpose**: Writes formatted performance report summary with timestamp to `report.txt`.
+
+---
+
+### 🖥️ Main Application Driver
+
+#### 🚪 `main()` (Option 8 / Program Loop)
+* **Purpose**: Entry point driver function running the main menu interface loop (options 1–8).
+
+---
+
+## 🔀 Algorithmic Flowcharts
+
+### 🗓️ Selection Sort Content Calendar Workflow
+
+```mermaid
+flowchart TD
+    Start(["🚀 Start display_content_calendar()"]) --> Load["📝 Load posts from posts.txt"]
+    Load --> CheckEmpty{"❓ Is post list empty?"}
+    
+    CheckEmpty -- Yes --> PrintEmpty["⚠️ Print 'No scheduled posts' & Return"] --> End(["🏁 End"])
+    CheckEmpty -- No --> InitSort["⚙️ Initialize Selection Sort (n = len(posts))"]
+    
+    InitSort --> OuterLoop["🔄 Outer Loop: i from 0 to n-1"]
+    OuterLoop --> SetMin["📌 Set min_index = i"]
+    SetMin --> InnerLoop["🔄 Inner Loop: j from i+1 to n-1"]
+    
+    InnerLoop --> Compare{"❓ posts[j].date < posts[min_index].date?"}
+    Compare -- Yes --> UpdateMin["✨ Set min_index = j"] --> IncJ["j = j + 1"]
+    Compare -- No --> IncJ
+    
+    IncJ --> CheckInner{"❓ j < n?"}
+    CheckInner -- Yes --> InnerLoop
+    CheckInner -- No --> Swap["🔀 Swap posts[i] and posts[min_index]"]
+    
+    Swap --> IncI["i = i + 1"]
+    IncI --> CheckOuter{"❓ i < n?"}
+    CheckOuter -- Yes --> OuterLoop
+    CheckOuter -- No --> Render["🎨 Format & Print Header Table"]
+    
+    Render --> FormatLoop["🔍 For each post: Truncate caption > 25 chars & Pad columns"]
+    FormatLoop --> DisplayTable["🖥️ Print Tabular Post Row"]
+    DisplayTable --> End
+```
+
+---
+
+### 🗑️ Cascading Deletion Workflow
+
+```mermaid
+flowchart TD
+    Start(["🚀 Start delete_post()"]) --> LoadPosts["📝 Load posts from posts.txt"]
+    LoadPosts --> PromptID["⌨️ Prompt user for Post ID"]
+    PromptID --> SearchPost{"❓ Post ID exists in posts?"}
+    
+    SearchPost -- No --> ErrorMsg["❌ Print Error: Post Not Found"] --> End(["🏁 End"])
+    SearchPost -- Yes --> DisplayPost["📋 Display Post Details"]
+    
+    DisplayPost --> Confirm{"❓ User inputs 'YES'?"}
+    Confirm -- No --> CancelMsg["🚫 Print 'Deletion cancelled'"] --> End
+    
+    Confirm -- Yes --> FilterPosts["🗑️ Filter out deleted post from posts list"]
+    FilterPosts --> SavePosts["💾 Save updated posts to posts.txt"]
+    
+    SavePosts --> LoadEng["📊 Load engagement list from engagement.txt"]
+    LoadEng --> SweepEng["🧹 Filter out matching Post ID from engagement list"]
+    
+    SweepEng --> CheckCascade{"❓ Was an engagement record removed?"}
+    CheckCascade -- Yes --> SaveEng["💾 Save updated engagement to engagement.txt"] --> PrintSuccess["✅ Print Success & Cascading Deletion Info"]
+    CheckCascade -- No --> PrintSuccess
+    
+    PrintSuccess --> End
+```
+
+---
+
+## 🧪 Unit Testing Suite (`test_planner.py`)
+
+The test suite validates data ingestion and analytics calculation functions using Python's native `unittest` runner.
+
+### 📊 Test Cases Breakdown
+
+| Test Method | Description | Assertions & Validation Criteria |
+| :--- | :--- | :--- |
+| 📱 `test_load_platforms` | Validates platform initialization | Verifies platform list length $> 0$ and first entry name equals `"Instagram"`. |
+| 📝 `test_load_posts` | Validates post parsing | Verifies post list length $> 0$ and first entry ID equals `"POST001"`. |
+| 📊 `test_load_engagement` | Validates engagement data parsing | Verifies engagement list length $> 0$. |
+| 📈 `test_report` | Validates statistical aggregation logic | Checks platform counts (`Instagram: 2`, `TikTok: 1`, `X: 1`) and verifies `POST002` total interaction count equals `16330`. |
+
+---
+
+## 🛠️ Installation & Execution Guide
+
+### 📦 Prerequisites
+* Python 3.6 or higher installed on your system.
+
+### ▶️ Running the Application
+To launch the interactive CLI program:
+```bash
+python planner.py
+```
+
+### 🧪 Running Unit Tests
+To execute the automated unit test suite:
 ```bash
 python -m unittest test_planner.py
 ```
-
-### Covered Test Cases:
-*   `test_load_platforms` — Ensures target channels load correctly with correct structures.
-*   `test_load_posts` — Confirms post data is structured properly.
-*   `test_load_engagement` — Verifies engagement parsing functions.
-*   `test_report` — Validates the performance report calculations (ranking algorithms, platform counting, best post identification).
