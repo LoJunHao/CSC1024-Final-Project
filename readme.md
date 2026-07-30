@@ -36,51 +36,106 @@ The Social Media Content Planner is designed as a standalone Python CLI applicat
 ### 📊 High-Level Architecture Diagram
 
 ```mermaid
-flowchart TD
+flowchart LR
+
+    %% =========================
+    %% Style Definitions
+    %% =========================
     classDef ui fill:#4f46e5,stroke:#3730a3,color:#ffffff,stroke-width:2px;
     classDef core fill:#0284c7,stroke:#0369a1,color:#ffffff,stroke-width:2px;
     classDef storage fill:#059669,stroke:#047857,color:#ffffff,stroke-width:2px;
     classDef test fill:#d97706,stroke:#b45309,color:#ffffff,stroke-width:2px;
 
-    User(["👤 User (CLI Interface)"]):::ui
-    Menu["🖥️ Main Menu Driver (main)"]:::core
-    
-    subgraph Core Logic ["⚙️ Core Application Logic (planner.py)"]
-        Menu --> AddPost["➕ Add New Post Idea"]:::core
-        Menu --> UpdateStatus["🔄 Update Post Status"]:::core
-        Menu --> RecordEng["📊 Record Engagement Metrics"]:::core
-        Menu --> ShowCal["🗓️ Display Content Calendar"]:::core
-        Menu --> DelPost["🗑️ Delete Post (Cascading)"]:::core
-        Menu --> Report["📈 Generate Performance Report"]:::core
-        Menu --> Export["📄 Export Report to File"]:::core
+    %% =========================
+    %% Swimlane 1: User Interface
+    %% =========================
+    subgraph UI["👤 USER INTERFACE"]
+        direction TB
+        User(["👤 User"]):::ui
+        Menu["🖥️ Main Menu Driver<br/>(main)"]:::ui
+
+        User <--> Menu
     end
 
-    subgraph Data Layer ["🗄️ Flat-File Persistence Layer"]
+    %% =========================
+    %% Swimlane 2: Core Logic
+    %% =========================
+    subgraph Core["⚙️ CORE APPLICATION LOGIC<br/>(planner.py)"]
+        direction TB
+
+        AddPost["➕ Add New Post Idea"]:::core
+        UpdateStatus["🔄 Update Post Status"]:::core
+        RecordEng["📊 Record Engagement Metrics"]:::core
+        ShowCal["🗓️ Display Content Calendar"]:::core
+        DelPost["🗑️ Delete Post (Cascading)"]:::core
+        Report["📈 Generate Performance Report"]:::core
+        Export["📄 Export Report to File"]:::core
+    end
+
+    %% =========================
+    %% Swimlane 3: Data Layer
+    %% =========================
+    subgraph Data["🗄️ DATA / PERSISTENCE LAYER"]
+        direction TB
+
         PlatformsFile[("📱 platforms.txt")]:::storage
         PostsFile[("📝 posts.txt")]:::storage
         EngFile[("📊 engagement.txt")]:::storage
         ReportFile[("📄 report.txt")]:::storage
     end
 
-    subgraph Testing ["🧪 Automated Unit Tests"]
-        UnitTestSuite["🧪 TestPlanner Suite (test_planner.py)"]:::test
+    %% =========================
+    %% Swimlane 4: Automated Testing
+    %% =========================
+    subgraph Testing["🧪 AUTOMATED UNIT TESTING"]
+        direction TB
+
+        UnitTestSuite["🧪 TestPlanner Suite<br/>(test_planner.py)"]:::test
     end
 
-    User <--> Menu
+    %% =========================
+    %% UI → Core Logic
+    %% =========================
+    Menu --> AddPost
+    Menu --> UpdateStatus
+    Menu --> RecordEng
+    Menu --> ShowCal
+    Menu --> DelPost
+    Menu --> Report
+    Menu --> Export
+
+    %% =========================
+    %% Core Logic → Data Layer
+    %% =========================
     AddPost <--> PlatformsFile
     AddPost <--> PostsFile
+
     UpdateStatus <--> PostsFile
+
     RecordEng <--> PostsFile
     RecordEng <--> EngFile
+
     ShowCal <--> PostsFile
+
     DelPost <--> PostsFile
     DelPost <--> EngFile
+
     Report <--> PlatformsFile
     Report <--> PostsFile
     Report <--> EngFile
+
     Export --> ReportFile
 
-    UnitTestSuite -->|"Executes Assertions"| Core Logic
+    %% =========================
+    %% Testing → Core Logic
+    %% =========================
+    UnitTestSuite -.->|"Tests"| AddPost
+    UnitTestSuite -.->|"Tests"| UpdateStatus
+    UnitTestSuite -.->|"Tests"| RecordEng
+    UnitTestSuite -.->|"Tests"| ShowCal
+    UnitTestSuite -.->|"Tests"| DelPost
+    UnitTestSuite -.->|"Tests"| Report
+    UnitTestSuite -.->|"Tests"| Export
 ```
 
 ---
